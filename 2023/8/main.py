@@ -1,6 +1,7 @@
 import sys
+from collections import Counter
 
-f = open("index.txt", "r")
+f = open("input.txt", "r")
 lines = [linea.rstrip('\n') for linea in f]
 
 movements_ = lines[0]
@@ -44,7 +45,34 @@ def get_next(actual_position, movement):
 
 
 def check_solution(solution):
-    return all('Z' in s for s in solution)
+    return 'Z' in solution
+
+
+def factorizar_primos(numero):
+    factores_primos = Counter()
+    divisor = 2
+    while divisor * divisor <= numero:
+        while (numero % divisor) == 0:
+            factores_primos[divisor] += 1
+            numero //= divisor
+        divisor += 1
+    if numero > 1:
+        factores_primos[numero] += 1
+    return factores_primos
+
+
+def mcm(lista: list[int]) -> int:
+    factores_comunes = Counter()
+
+    for numero in lista:
+        factores_numero = factorizar_primos(numero)
+        factores_comunes = factores_comunes | factores_numero
+
+    mcm = 1
+    for factor, exponente in factores_comunes.items():
+        mcm *= factor ** exponente
+
+    return mcm
 
 
 def part2():
@@ -52,33 +80,34 @@ def part2():
 
     # Get all nodes with an 'A' to start that path
     start_positions = []
+
     for key in puzzle:
         if 'A' in key:
             start_positions.append(key)
 
-    actual_position = start_positions
-    print(actual_position)
+    steps_to_solve = [0] * len(start_positions)
 
-    while not check_solution(actual_position):
-        if len(movements) > 0:
-            movement = movements.pop(0)
+    for start_position in start_positions:
 
-            if len(movements) == 0:
-                for movement in movements_:
-                    movements.append(movement)
+        actual = start_position
 
-            next_path = []
+        while not check_solution(actual):
+            # print(f"Estamos en {actual}")
+            if len(movements) > 0:
+                movement = movements.pop(0)
 
-            for path in actual_position:
-                next_path.append(get_next(path, movement))
+                if len(movements) == 0:
+                    for movement in movements_:
+                        movements.append(movement)
 
-            print(next_path)
+            actual = get_next(actual, movement)
 
-            actual_position = next_path
-            steps += 1
-            print(steps)
+            # print(f"Nos vamos a {movement} -> {actual}")
+            steps_to_solve[start_positions.index(start_position)] += 1
 
-    print(steps)
+            # print("....")
+
+    print(mcm(steps_to_solve))
 
 
 if __name__ == '__main__':
