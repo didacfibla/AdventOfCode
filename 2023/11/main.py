@@ -2,8 +2,53 @@ from collections import deque
 from itertools import combinations
 
 
-def load_data():
-    universe = [list(line.rstrip('\n')) for line in open("input", "r")]
+def find_expansions(universe):
+    filas = len(universe)
+    columnas = len(universe[0])
+
+    filas_punto = []
+    columnas_punto = []
+
+    for i in range(filas):
+        # Verificar si la fila contiene únicamente puntos
+        if all(elem == '.' for elem in universe[i]):
+            filas_punto.append(i)
+
+    for j in range(columnas):
+        # Verificar si la columna contiene únicamente puntos
+        if all(universe[i][j] == '.' for i in range(filas)):
+            columnas_punto.append(j)
+
+    return filas_punto, columnas_punto
+
+
+def expand_universe(universe, expansion_cords):
+    expansion_times = 1
+
+    cols_inserted = 0
+    for col_to_exapand in expansion_cords[1]:
+        for i in range(0, expansion_times):
+            for row in universe:
+                row.insert(col_to_exapand + cols_inserted, '.')
+            cols_inserted += 1
+
+    new_row = ['.' for _ in range(len(universe[0]))]
+    rows_inserted = 0
+    for row_to_exapand in expansion_cords[0]:
+        for i in range(0, expansion_times):
+            universe.insert(row_to_exapand + rows_inserted, new_row)
+            rows_inserted += 1
+
+
+def load_data(filename):
+    # Load the universe
+    universe = [list(line.rstrip('\n')) for line in open(filename, "r")]
+
+    # Expand the universe
+    expansion_coords = find_expansions(universe)
+    expand_universe(universe, expansion_coords)
+
+    # Locate galaxies
     galaxies = [(i, j) for i, row in enumerate(universe) for j, elem in enumerate(row) if elem == '#']
 
     numero_actual = 1
@@ -58,7 +103,7 @@ def shortest_path(matriz, inicio, destino):
 
 
 if __name__ == "__main__":
-    u, g = load_data()
+    u, g = load_data("input")
 
     pares = generar_pares(g)
     input(f"Hay {len(pares)} pares, presiona una tecla para empezar...")
