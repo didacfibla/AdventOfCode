@@ -1,121 +1,34 @@
+import sys
 from collections import deque
 from itertools import combinations
-
-
-def find_expansions(universe):
-    filas = len(universe)
-    columnas = len(universe[0])
-
-    filas_punto = []
-    columnas_punto = []
-
-    for i in range(filas):
-        # Verificar si la fila contiene únicamente puntos
-        if all(elem == '.' for elem in universe[i]):
-            filas_punto.append(i)
-
-    for j in range(columnas):
-        # Verificar si la columna contiene únicamente puntos
-        if all(universe[i][j] == '.' for i in range(filas)):
-            columnas_punto.append(j)
-
-    return filas_punto, columnas_punto
-
-
-def expand_universe(universe, expansion_cords):
-    expansion_times = 1
-
-    cols_inserted = 0
-    for col_to_exapand in expansion_cords[1]:
-        for i in range(0, expansion_times):
-            for row in universe:
-                row.insert(col_to_exapand + cols_inserted, '.')
-            cols_inserted += 1
-
-    new_row = ['.' for _ in range(len(universe[0]))]
-    rows_inserted = 0
-    for row_to_exapand in expansion_cords[0]:
-        for i in range(0, expansion_times):
-            universe.insert(row_to_exapand + rows_inserted, new_row)
-            rows_inserted += 1
 
 
 def load_data(filename):
     # Load the universe
     universe = [list(line.rstrip('\n')) for line in open(filename, "r")]
 
-    # Expand the universe
-    expansion_coords = find_expansions(universe)
-    expand_universe(universe, expansion_coords)
-
     # Locate galaxies
-    galaxies = [(i, j) for i, row in enumerate(universe) for j, elem in enumerate(row) if elem == '#']
+    galaxies = [(r, c) for r, row in enumerate(universe) for c, ch in enumerate(row) if ch == '#']
 
-    numero_actual = 1
-    for i in range(len(universe)):
-        for j in range(len(universe[0])):
-            if universe[i][j] == '#':
-                universe[i][j] = numero_actual
-                numero_actual += 1
+    # Locate row formed only by '.'
+    empty_rows = [r for r, row in enumerate(universe) if all(ch == "." for ch in row)]
+    empty_cols = [c for c, col in enumerate(zip(*universe)) if all(ch == "." for ch in col)]
 
-    return universe, galaxies
+    total = 0
+    scale = 1000000
 
+    # Recorremos cada posible par de galaxias y calculamos la distancia
+    for i, (r1, c1) in enumerate(galaxies):
+        for (r2, c2) in galaxies[:i]:  # manhattan distance formula (|P2x - P1x| + |P2y + P2y|) give us distane between two points in a xy plane
+            # Si la fila o columna esta vacia, la expandimos
+            for r in range(min(r1, r2), max(r1, r2)):
+                total += scale if r in empty_rows else 1
 
-def generar_pares(elementos):
-    pares = list(combinations(elementos, 2))
-    return pares
+            for c in range(min(c1, c2), max(c1, c2)):
+                total += scale if c in empty_cols else 1
 
-
-def shortest_path(matriz, inicio, destino):
-    filas = len(matriz)
-    columnas = len(matriz[0])
-
-    # Definir movimientos posibles (arriba, abajo, izquierda, derecha)
-    movimientos = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-
-    # Inicializar la cola para BFS
-    cola = deque([(inicio[0], inicio[1], 0)])  # (fila, columna, distancia)
-
-    # Marcar la posición de inicio como visitada
-    visitado = set([(inicio[0], inicio[1])])
-
-    while cola:
-        fila, columna, distancia = cola.popleft()
-
-        # Verificar si hemos llegado al destino
-        if (fila, columna) == destino:
-            return distancia
-
-        # Explorar los movimientos posibles
-        for movimiento in movimientos:
-            nueva_fila, nueva_columna = fila + movimiento[0], columna + movimiento[1]
-
-            # Verificar si la nueva posición está dentro de la matriz
-            if 0 <= nueva_fila < filas and 0 <= nueva_columna < columnas:
-                # Marcar la nueva posición como visitada y agregar a la cola
-                nueva_posicion = (nueva_fila, nueva_columna)
-                if nueva_posicion not in visitado:
-                    visitado.add(nueva_posicion)
-                    cola.append((nueva_fila, nueva_columna, distancia + 1))
-
-    # Si no se encuentra un camino, devolver -1
-    return -1
+    print(total)
 
 
 if __name__ == "__main__":
-    u, g = load_data("input")
-
-    pares = generar_pares(g)
-    input(f"Hay {len(pares)} pares, presiona una tecla para empezar...")
-
-    res = 0
-
-    for par in pares:
-        inicio = par[0]
-        destino = par[1]
-        longitud = shortest_path(u, inicio, destino)
-        res += longitud
-
-        print(f"Inicio: {inicio}, Destino: {destino}, Longitud: {longitud}")
-
-    print(f"\nEl resultado es: {res}")
+    load_data("input")
